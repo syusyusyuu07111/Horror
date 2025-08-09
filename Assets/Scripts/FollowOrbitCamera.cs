@@ -1,131 +1,180 @@
+ï»¿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class FollowOrbitCamera : MonoBehaviour
 {
     [Header("Target")]
     public Transform target;
-    [Tooltip("ƒ^[ƒQƒbƒg‚Ì“ª‚ ‚½‚èB–¢w’è‚È‚ç target ‚ğg‚¤")]
-    public Transform lookAt;
+    [Tooltip("æœªæŒ‡å®šãªã‚‰ target ã‚’è¦‹ã‚‹")] public Transform lookAt;
 
-    [Header("‹——£/Šp“x")]
-    public float distance = 4f;
-    public float minDistance = 1.2f;
-    public float maxDistance = 6f;
-    public float height = 1.6f;         // –Úü‚Ì‚‚³
-    public float minPitch = -30f;
-    public float maxPitch = 60f;
+    [Header("ã‚«ãƒ¡ãƒ©ç§»å‹•/å›è»¢ã®ã‚¹ãƒ ãƒ¼ã‚ºã•")]
+    public float posDamping = 9f;
+    public float rotDamping = 18f;
 
-    [Header("‘€ìŠ´")]
-    public float yawSpeed = 180f;       // …•½‰ñ“] Šp“x/•b
-    public float pitchSpeed = 120f;     // ‚’¼‰ñ“] Šp“x/•b
-    public float zoomSpeed = 6f;        // ƒY[ƒ€‹——£/•b
-    public float posDamping = 12f;      // ˆÊ’uƒXƒ€[ƒY
-    public float rotDamping = 18f;      // ‰ñ“]ƒXƒ€[ƒY
-
-    [Header("©“®’Ç]iˆÚ“®•ûŒü‚É‚ä‚Á‚­‚èŒü‚­j")]
-    public Rigidbody targetRb;          // •t‚¯‚È‚­‚Ä‚àOK
-    public float autoAlignSpeed = 90f;  // –³‘€ì‚Éis•ûŒü‚Ö‰ñ“ª
-    public float autoAlignVelThreshold = 0.5f;
-    public float noLookInputTimeToAuto = 0.4f;
-
-    [Header("ƒJƒƒ‰Õ“Ë‰ñ”ğ")]
+    [Header("è¡çª/é®è”½")]
     public LayerMask collisionMask = ~0;
-    public float collisionRadius = 0.2f; // ƒXƒtƒBƒAƒLƒƒƒXƒg”¼Œa
-    public float collisionBuffer = 0.05f;
+    public LayerMask occluderMask = ~0;
+    public float collisionRadius = 0.25f;
+    public float collisionBuffer = 0.06f;
+    public bool allowDistanceShrinkAsLastResort = false;
 
-    [Header("Input (Input Actions ‚ÌQÆ)")]
-    public InputActionReference lookAction; // Vector2 (Mouse delta / RightStick)
-    public InputActionReference zoomAction; // float (Mouse scroll Y / Gamepad triggers“™)
+    [Header("ã‚»ãƒ³ã‚¿ãƒªãƒ³ã‚°ä¿è¨¼")]
+    public Rect safeViewportRect = new Rect(0.35f, 0.35f, 0.30f, 0.30f);
+    public float recenterBoostDuration = 0.25f;
+    public float posDampingBoost = 3f;
+    public float rotDampingBoost = 3f;
 
-    float yaw, pitch;
-    float noLookTimer;
-    Vector3 vel; // SmoothDamp—p
+    // å†…éƒ¨
+    Vector3 _initialDirFromPivot;
+    float _initialDistance;
+    float _initialPitchDeg;
+    float _initialPivotY;
 
-    void OnEnable()
-    {
-        lookAction?.action.Enable();
-        zoomAction?.action.Enable();
-    }
-    void OnDisable()
-    {
-        lookAction?.action.Disable();
-        zoomAction?.action.Disable();
-    }
+    float _recenteringUntil = -1f;
+    Camera _cam;
+
+    readonly HashSet<Renderer> _hidden = new HashSet<Renderer>();
 
     void Start()
     {
-        if (!target) { Debug.LogWarning("FollowOrbitCamera: target–¢İ’è"); enabled = false; return; }
+        if (!target)
+        {
+            Debug.LogWarning("FollowOrbitCamera: target æœªè¨­å®š");
+            enabled = false;
+            return;
+        }
         if (!lookAt) lookAt = target;
-        // ‰ŠúŠp“x‚ğ¡‚ÌŒü‚«‚©‚ç„’è
-        Vector3 forward = target.forward;
-        forward.y = 0;
-        if (forward.sqrMagnitude > 0.0001f) yaw = Quaternion.LookRotation(forward).eulerAngles.y;
+
+        _cam = GetComponent<Camera>();
+        if (!_cam) _cam = Camera.main;
+
+        // é–‹å§‹æ™‚ã®æ³¨è¦–ç‚¹ï¼ˆé«˜ã•å›ºå®šï¼‰
+        Vector3 pivotNow = lookAt.position;
+        _initialPivotY = pivotNow.y;
+
+        // é–‹å§‹æ§‹å›³ã‚’è¨˜éŒ²
+        Vector3 fromPivot = transform.position - pivotNow;
+        _initialDistance = fromPivot.magnitude > 0.0001f ? fromPivot.magnitude : 6f;
+        _initialDirFromPivot = fromPivot.normalized;
+        _initialPitchDeg = transform.rotation.eulerAngles.x;
     }
 
     void LateUpdate()
     {
         if (!target) return;
 
-        // --- “ü—Í ---
-        Vector2 look = lookAction ? lookAction.action.ReadValue<Vector2>() : Vector2.zero;
-        float zoom = zoomAction ? zoomAction.action.ReadValue<float>() : 0f;
+        // pivotã¯Yå›ºå®šï¼ˆé–‹å§‹æ™‚ã®é«˜ã•ï¼‰
+        Vector3 pivot = new Vector3(
+            lookAt.position.x,
+            _initialPivotY,
+            lookAt.position.z
+        );
 
-        bool hasLookInput = look.sqrMagnitude > 0.000001f;
+        // é–‹å§‹æ§‹å›³ã®è·é›¢ã‚’ç¶­æŒ
+        Vector3 desiredPos = pivot + _initialDirFromPivot * _initialDistance;
 
-        // ‰EƒXƒeƒBƒbƒN‚âƒ}ƒEƒX‚ÌŠ´“xi•bŠÔŠp“xj
-        yaw += look.x * yawSpeed * Time.deltaTime;
-        pitch -= look.y * pitchSpeed * Time.deltaTime;
-        pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
+        // è¡çªå›é¿
+        Vector3 dirFromPivot = desiredPos - pivot;
+        Quaternion baseRotForSlide = Quaternion.LookRotation(-dirFromPivot.normalized, Vector3.up);
+        Vector3 safePos = KeepDistanceSlideAround(pivot, desiredPos, baseRotForSlide, out bool hitSomething);
 
-        // ƒY[ƒ€iƒXƒNƒ[ƒ‹‚Ì•„†‚ÍŠÂ‹«‚Å‹t‚É‚È‚è‚ª‚¿¨D‚İ‚Å”½“]j
-        distance = Mathf.Clamp(distance - zoom * (zoomSpeed * Time.deltaTime), minDistance, maxDistance);
-
-        // –³‘€ìŠÔ‚ÌŒv‘ª
-        if (hasLookInput) noLookTimer = 0f; else noLookTimer += Time.deltaTime;
-
-        // --- ©“®’Ç]‚Åis•ûŒü‚ÉŒü‚¯‚éi”CˆÓj ---
-        if (!hasLookInput && targetRb && noLookTimer > noLookInputTimeToAuto)
+        if (hitSomething && allowDistanceShrinkAsLastResort)
         {
-            Vector3 v = targetRb.linearVelocity; v.y = 0;
-            if (v.sqrMagnitude > autoAlignVelThreshold * autoAlignVelThreshold)
+            Vector3 d = desiredPos - pivot;
+            float L = d.magnitude;
+            if (L > 0.0001f)
             {
-                float targetYaw = Quaternion.LookRotation(v).eulerAngles.y;
-                yaw = Mathf.MoveTowardsAngle(yaw, targetYaw, autoAlignSpeed * Time.deltaTime);
+                Vector3 unit = d / L;
+                if (Physics.SphereCast(pivot, collisionRadius, unit, out var hit, L, collisionMask, QueryTriggerInteraction.Ignore))
+                    safePos = hit.point - unit * collisionBuffer;
             }
         }
 
-        // --- –Ú•WˆÊ’uŒvZ ---
-        Vector3 pivot = (lookAt ? lookAt.position : target.position) + Vector3.up * height;
-        Quaternion rot = Quaternion.Euler(pitch, yaw, 0f);
-        Vector3 desiredCamPos = pivot + rot * new Vector3(0, 0, -distance);
-
-        // --- ƒJƒƒ‰Õ“Ë‰ñ”ğiƒXƒtƒBƒAƒLƒƒƒXƒg‚Åè‘O‚ÉŠñ‚¹‚éj ---
-        Vector3 dir = (desiredCamPos - pivot);
-        float dist = dir.magnitude;
-        Vector3 safeCamPos = desiredCamPos;
-        if (dist > 0.001f)
+        // ã‚»ãƒ¼ãƒ•æ ãƒã‚§ãƒƒã‚¯ â†’ ã¯ã¿å‡ºãŸã‚‰ãƒªã‚»ãƒ³ã‚¿ãƒ¼
+        bool forceRecentering = false;
+        if (_cam)
         {
-            dir /= dist;
-            if (Physics.SphereCast(pivot, collisionRadius, dir, out RaycastHit hit, dist, collisionMask, QueryTriggerInteraction.Ignore))
+            Vector3 vp = _cam.WorldToViewportPoint(lookAt.position);
+            if (vp.z <= 0f ||
+                vp.x < safeViewportRect.xMin ||
+                vp.x > safeViewportRect.xMax ||
+                vp.y < safeViewportRect.yMin ||
+                vp.y > safeViewportRect.yMax)
             {
-                safeCamPos = hit.point - dir * collisionBuffer;
+                _recenteringUntil = Time.time + recenterBoostDuration;
             }
+            forceRecentering = (Time.time < _recenteringUntil);
         }
 
-        // --- ƒXƒ€[ƒY’Ç] ---
-        // ˆÊ’u
-        transform.position = Vector3.SmoothDamp(transform.position, safeCamPos, ref vel, 1f / Mathf.Max(0.0001f, posDamping));
-        // ‰ñ“]iƒ^[ƒQƒbƒg‚ğŒü‚­j
-        Quaternion lookRot = Quaternion.LookRotation(pivot - transform.position, Vector3.up);
-        transform.rotation = Quaternion.RotateTowards(transform.rotation, lookRot, rotDamping * Time.deltaTime);
+        // ä½ç½®é©ç”¨
+        float posDampNow = forceRecentering ? posDamping * posDampingBoost : posDamping;
+        float lerp = 1f - Mathf.Exp(-posDampNow * Time.deltaTime);
+        transform.position = Vector3.Lerp(transform.position, safePos, lerp);
+
+        // å›è»¢é©ç”¨ï¼ˆä¸Šä¸‹å›è»¢ãªã—ï¼‰
+        Vector3 toPivot = pivot - transform.position;
+        Vector3 toPivotXZ = new Vector3(toPivot.x, 0f, toPivot.z);
+        float yawDeg = toPivotXZ.sqrMagnitude > 1e-6f
+            ? Mathf.Atan2(toPivotXZ.x, toPivotXZ.z) * Mathf.Rad2Deg
+            : transform.eulerAngles.y;
+
+        Quaternion targetRot = Quaternion.Euler(_initialPitchDeg, yawDeg, 0f);
+        float rotDampNow = forceRecentering ? rotDamping * rotDampingBoost : rotDamping;
+        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRot, rotDampNow * Time.deltaTime);
+
+        HandleOccluders(transform.position, pivot);
     }
 
-    // Sceneã‚Å”¼Œa‰Â‹‰»i”CˆÓj
-    void OnDrawGizmosSelected()
+    Vector3 KeepDistanceSlideAround(Vector3 pivot, Vector3 desiredPos, Quaternion baseRot, out bool hitSomething)
     {
-        if (!Application.isPlaying) return;
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawWireSphere(transform.position, collisionRadius);
+        hitSomething = false;
+        Vector3 dirCam = desiredPos - pivot;
+        float dist = dirCam.magnitude;
+        if (dist < 0.0001f) return desiredPos;
+        dirCam /= dist;
+
+        if (!Physics.SphereCast(pivot, collisionRadius, dirCam, out var _hit, dist, collisionMask, QueryTriggerInteraction.Ignore))
+            return desiredPos;
+
+        hitSomething = true;
+        float[] angles = { 4f, -4f, 8f, -8f, 12f, -12f };
+
+        foreach (float ay in angles)
+        {
+            Quaternion q = Quaternion.Euler(0f, ay, 0f) * baseRot;
+            Vector3 cand = pivot + (q * Vector3.back) * _initialDistance;
+            Vector3 d = cand - pivot; float L = d.magnitude; if (L < 0.0001f) continue; d /= L;
+            if (!Physics.SphereCast(pivot, collisionRadius, d, out _hit, L, collisionMask, QueryTriggerInteraction.Ignore))
+                return cand;
+        }
+        foreach (float ax in angles)
+        {
+            Quaternion q = Quaternion.Euler(ax, 0f, 0f) * baseRot;
+            Vector3 cand = pivot + (q * Vector3.back) * _initialDistance;
+            Vector3 d = cand - pivot; float L = d.magnitude; if (L < 0.0001f) continue; d /= L;
+            if (!Physics.SphereCast(pivot, collisionRadius, d, out _hit, L, collisionMask, QueryTriggerInteraction.Ignore))
+                return cand;
+        }
+        return desiredPos;
+    }
+
+    void HandleOccluders(Vector3 from, Vector3 to)
+    {
+        foreach (var r in _hidden) if (r) r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+        _hidden.Clear();
+
+        Vector3 dir = (to - from);
+        float d = dir.magnitude;
+        if (d < 0.0001f) return;
+        dir /= d;
+
+        var hits = Physics.SphereCastAll(from, collisionRadius * 0.9f, dir, d, occluderMask, QueryTriggerInteraction.Ignore);
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var r = hits[i].collider.GetComponent<Renderer>();
+            if (!r) continue;
+            r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly;
+            _hidden.Add(r);
+        }
     }
 }
