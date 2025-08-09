@@ -1605,7 +1605,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   player: {fileID: 837542131}
-  chaseSpeed: 1
+  chaseSpeed: 3
   gameOverScene: GameOver
 --- !u!65 &1422701943
 BoxCollider:
@@ -1626,8 +1626,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.44559586, y: 0.4905333, z: 0.2845298}
-  m_Center: {x: 0.006460488, y: 0.25473335, z: -0.011680901}
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1001 &1479706904
 PrefabInstance:
   m_ObjectHideFlags: 0
