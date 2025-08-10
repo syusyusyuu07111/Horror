@@ -1,9 +1,49 @@
 fileFormatVersion: 2
-guid: df5469f288a83f44a94344286f4c0cbb
+guid: 4528cbb2240f7714793dd17801f669e6
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Default_Material
+    second: {fileID: 2100000, guid: 35a6732db69ae3a43bed134b2caa689a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: hair
+    second: {fileID: 2100000, guid: 1d44cfbbb2011474a8a89e19f010e728, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: hoppe
+    second: {fileID: 2100000, guid: 1f630ea9db854e34eb4c50887cb3dcb9, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: huku
+    second: {fileID: 2100000, guid: 578a94ccff4ce8a44b9f8e2fb9e533f0, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: huku_shadow
+    second: {fileID: 2100000, guid: 3319816c0542491459f286d40ce3a00f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: matuge
+    second: {fileID: 2100000, guid: 8a11e60580e0e034f9c7f8224f35f18b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: mayuge
+    second: {fileID: 2100000, guid: 135fbe080c63bb846b1dcfd1ace30809, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: skin
+    second: {fileID: 2100000, guid: a7c9aa3aed4f83548be19b4a696072a6, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

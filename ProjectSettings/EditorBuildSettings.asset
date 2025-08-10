@@ -17,6 +17,18 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Epilogue.unity
     guid: 2af12c201ce599348abce9109491c5f3
+  - enabled: 1
+    path: Assets/Scenes/Ingame 1.unity
+    guid: 2eeaf0f5f42312a4ba264bfb7957bc57
+  - enabled: 1
+    path: Assets/Scenes/Event1.unity
+    guid: 4014e01098619ef41b55ff95af9184c2
+  - enabled: 1
+    path: Assets/Scenes/Ingame 2.unity
+    guid: 1ef0073804b4a344caca5e5903cb754b
+  - enabled: 1
+    path: Assets/Scenes/Epilogue 1.unity
+    guid: f4bf07e5dc9e57c46a741f86dc8fa43d
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 47971da3e3a775144af57a70cf4043e4, type: 3}
   m_UseUCBPForAssetBundles: 0
