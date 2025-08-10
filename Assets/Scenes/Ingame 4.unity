@@ -600,7 +600,7 @@ MonoBehaviour:
   surviveSeconds: 30
   timerText: {fileID: 1582774448}
   messageText: {fileID: 0}
-  nextSceneName: Ingame 4
+  nextSceneName: 
   winSceneLoadDelay: 1
 --- !u!4 &166800537
 Transform:
