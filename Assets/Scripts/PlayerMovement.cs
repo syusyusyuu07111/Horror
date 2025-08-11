@@ -29,7 +29,7 @@ public class PlayerMovement : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         rb.interpolation = RigidbodyInterpolation.Interpolate;
 
-        // 横転防止。Y回転はプレイヤー操作外なので凍結しない
+        // 横転防止
         rb.constraints |= RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
 
         if (!cam && Camera.main) cam = Camera.main.transform;
@@ -42,7 +42,7 @@ public class PlayerMovement : MonoBehaviour
     {
         if (!value.isPressed) return;
 
-        // 垂直速度を一旦ゼロにしてからジャンプ
+        // 垂直速度をリセットしてジャンプ
 #if UNITY_6000_0_OR_NEWER
         Vector3 v = rb.linearVelocity; v.y = 0f; rb.linearVelocity = v;
 #else
@@ -60,7 +60,6 @@ public class PlayerMovement : MonoBehaviour
         // デッドゾーン
         if (mag < inputDeadZone)
         {
-            // 入力なし：横移動は止める（Yだけ維持）
 #if UNITY_6000_0_OR_NEWER
             rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
 #else
@@ -69,9 +68,9 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
 
-        if (mag > 1f) input.Normalize(); // アナログ入力を正規化
+        if (mag > 1f) input.Normalize();
 
-        // カメラ基準 or ワールド基準で移動方向を決定（回転は一切変更しない）
+        // カメラ基準 or ワールド基準
         Vector3 moveDir = input;
         if (cameraRelative && cam)
         {
@@ -81,7 +80,7 @@ public class PlayerMovement : MonoBehaviour
             if (moveDir.sqrMagnitude > 1f) moveDir.Normalize();
         }
 
-        // 速度を設定（XZのみ）。向き（rotation）は絶対に触らない
+        // XZ速度設定
         Vector3 horiz = moveDir * (speed * Mathf.Clamp01(mag));
 #if UNITY_6000_0_OR_NEWER
         rb.linearVelocity = new Vector3(horiz.x, rb.linearVelocity.y, horiz.z);

@@ -101,6 +101,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d585e390cc37ab54b825047dea77563b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nextSceneName: Epilogue 1
+  nextSceneName: Ingame 3
   playerTag: Player
   delay: 0.1

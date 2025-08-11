@@ -600,7 +600,7 @@ MonoBehaviour:
   surviveSeconds: 30
   timerText: {fileID: 1582774448}
   messageText: {fileID: 0}
-  nextSceneName: 
+  nextSceneName: Ingame 5
   winSceneLoadDelay: 1
 --- !u!4 &166800537
 Transform:
@@ -626,7 +626,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 254078273}
-  - component: {fileID: 254078272}
+  - component: {fileID: 254078274}
   m_Layer: 0
   m_Name: GameObject
   m_TagString: Untagged
@@ -634,39 +634,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &254078272
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 254078271}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c32d1307ec21a444aa715583ca8b74a2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  player: {fileID: 824451523}
-  playerCamera: {fileID: 3836871}
-  ghostPrefab: {fileID: 1172762231}
-  firstSpawnDelay: 3
-  spawnCooldown: 6
-  minSpawnDistance: 2.5
-  maxSpawnDistance: 4.5
-  heightOffset: 0
-  viewSafeAngle: 50
-  obstacleMask:
-    serializedVersion: 2
-    m_Bits: 0
-  vignetteUI: {fileID: 0}
-  vignetteMaxAlpha: 0.45
-  warningLeadTime: 0.6
-  oneShotSource: {fileID: 1841141346}
-  warningSE: {fileID: 8300000, guid: e089b4f3144608e46908ef06301409e6, type: 3}
-  spawnSE: {fileID: 8300000, guid: 875c11ddce2075a4082799fdffd63f6b, type: 3}
-  spawnFxPrefab: {fileID: 2797927776944752618, guid: 4139219aaff00f440b4f8bbb35b408ab, type: 3}
-  fadeInTime: 0.3
-  drawGizmos: 1
 --- !u!4 &254078273
 Transform:
   m_ObjectHideFlags: 0
@@ -682,6 +649,45 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &254078274
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 254078271}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: faab5cf715b46184d9c86b0e8595ec4b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  player: {fileID: 824451523}
+  playerCamera: {fileID: 3836871}
+  ghostPrefab: {fileID: 1172762231}
+  playerRb: {fileID: 824451522}
+  speedThreshold: 0.05
+  headingSmoothTime: 0.2
+  firstSpawnDelay: 3
+  spawnCooldown: 6
+  minSpawnDistance: 3
+  maxSpawnDistance: 5
+  lateralJitterMin: -1
+  lateralJitterMax: 1
+  heightOffset: 0
+  requireOffscreen: 0
+  viewSafeAngle: 50
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 0
+  vignetteUI: {fileID: 0}
+  vignetteMaxAlpha: 0.45
+  warningLeadTime: 0.6
+  oneShotSource: {fileID: 1841141346}
+  warningSE: {fileID: 8300000, guid: 875c11ddce2075a4082799fdffd63f6b, type: 3}
+  spawnSE: {fileID: 8300000, guid: e089b4f3144608e46908ef06301409e6, type: 3}
+  spawnFxPrefab: {fileID: 2797927776944752618, guid: 4139219aaff00f440b4f8bbb35b408ab, type: 3}
+  fadeInTime: 0.25
+  drawGizmos: 1
 --- !u!1 &341305600 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: d795ec0c8d387314f8ea529a3882da92, type: 3}

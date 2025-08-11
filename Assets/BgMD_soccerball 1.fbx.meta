@@ -1,64 +1,9 @@
 fileFormatVersion: 2
-guid: d795ec0c8d387314f8ea529a3882da92
+guid: 09d7a846464e8344ca69a07871b193ff
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects:
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: hair
-    second: {fileID: 2100000, guid: c6e823baa02f37c4f945219111b03a81, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: inner
-    second: {fileID: 2100000, guid: 275ecbcbd428eee408a70f056f86c138, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: lambert12
-    second: {fileID: 2100000, guid: 2afd0190056af364f9fd737aef771921, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: matuge
-    second: {fileID: 2100000, guid: a8772139dafde954d8dfee54bd1dc67c, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: mayuge
-    second: {fileID: 2100000, guid: 0f3915fc232aad94fa747a744ac28bbf, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: pants
-    second: {fileID: 2100000, guid: 60518d9136f62f044bea8a6902a07ed5, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: shirts
-    second: {fileID: 2100000, guid: 008d3accdc1c03e4e8988e3c5ba12fbc, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: shirts_shadow
-    second: {fileID: 2100000, guid: 1d0892e7bf7a814428a0cc345f5c7257, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: shoes
-    second: {fileID: 2100000, guid: 5c1b8db7e67af1c45bca7eb59ddbfb57, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: skin
-    second: {fileID: 2100000, guid: 66b521b6cfac44341886f9162d239702, type: 2}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: Syujinkou_face
-    second: {fileID: 2800000, guid: a1069f08f53566548a8e686ea92b5552, type: 3}
+  externalObjects: {}
   materials:
     materialImportMode: 2
     materialName: 0
@@ -152,7 +97,7 @@ ModelImporter:
   autoGenerateAvatarMappingIfUnspecified: 1
   animationType: 2
   humanoidOversampling: 1
-  avatarSetup: 1
+  avatarSetup: 0
   addHumanoidExtraRootOnlyWhenUsingAvatar: 1
   importBlendShapeDeformPercent: 1
   remapMaterialsIfMaterialImportModeIsNone: 0
