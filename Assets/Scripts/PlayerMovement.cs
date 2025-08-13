@@ -13,6 +13,12 @@ public class PlayerMovement : MonoBehaviour
     public float speed = 5f;
     public float inputDeadZone = 0.05f;
 
+    [Header("こそこそ歩き（Shift）")]
+    [Tooltip("スニーク時の移動速度")]
+    public float sneakSpeed = 2f;
+    [Tooltip("押している間だけスニーク（true）/ トグル（false）")]
+    public bool holdToSneak = true;
+
     [Header("ジャンプ")]
     public float jumpForce = 5f;
 
@@ -29,8 +35,13 @@ public class PlayerMovement : MonoBehaviour
 
     public float turnSpeedDeg = 720f; // 見た目の回転速度
 
+    // ===== 外部から参照するためのプロパティ =====
+    public bool IsSneaking { get; private set; }
+
     // 入力
     Vector2 moveInput;
+    bool _sneakHeldByAction;   // InputAction用（押しっぱ）
+    bool _sneakToggle;         // トグル用
     Rigidbody rb;
 
     void Awake()
@@ -46,6 +57,13 @@ public class PlayerMovement : MonoBehaviour
     // Input System
     public void OnMove(InputValue value) => moveInput = value.Get<Vector2>();
 
+    // 省略可：Input Actions で "Sneak" を作った場合に呼ばれる
+    public void OnSneak(InputValue value)
+    {
+        if (holdToSneak) _sneakHeldByAction = value.isPressed;
+        else if (value.isPressed) _sneakToggle = !_sneakToggle;
+    }
+
     public void OnJump(InputValue value)
     {
         if (!value.isPressed) return;
@@ -55,6 +73,24 @@ public class PlayerMovement : MonoBehaviour
         var v = rb.velocity; v.y = 0f; rb.velocity = v;
 #endif
         rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+    }
+
+    void Update()
+    {
+        // キーボードのShiftもフォールバックで使えるように
+        var kb = Keyboard.current;
+        bool kbHeld = kb != null && (kb.leftShiftKey.isPressed || kb.rightShiftKey.isPressed);
+
+        if (holdToSneak)
+        {
+            IsSneaking = _sneakHeldByAction || kbHeld;
+        }
+        else
+        {
+            if (kb != null && (kb.leftShiftKey.wasPressedThisFrame || kb.rightShiftKey.wasPressedThisFrame))
+                _sneakToggle = !_sneakToggle;
+            IsSneaking = _sneakToggle;
+        }
     }
 
     void FixedUpdate()
@@ -89,8 +125,9 @@ public class PlayerMovement : MonoBehaviour
             if (moveDir.sqrMagnitude > 1f) moveDir.Normalize();
         }
 
-        // 速度適用（水平のみ）
-        Vector3 horiz = moveDir * (speed * Mathf.Clamp01(mag));
+        // 速度適用（水平のみ）: スニークなら遅く
+        float moveSpeed = IsSneaking ? sneakSpeed : speed;
+        Vector3 horiz = moveDir * (moveSpeed * Mathf.Clamp01(mag));
 #if UNITY_6000_0_OR_NEWER
         rb.linearVelocity = new Vector3(horiz.x, rb.linearVelocity.y, horiz.z);
 #else
@@ -101,10 +138,7 @@ public class PlayerMovement : MonoBehaviour
         // ==== 進行方向へ見た目を向ける（モデルの前向きズレを補正） ====
         if (moveDir.sqrMagnitude > 1e-6f)
         {
-            // 進行方向 → 目標回転
             Quaternion targetRot = Quaternion.LookRotation(moveDir, Vector3.up);
-
-            // モデルの“前”が+Z以外なら補正
             float axisOffset = (int)modelForward; // 0, 90, 180, -90
             targetRot *= Quaternion.Euler(0f, axisOffset + extraYawOffset, 0f);
 
