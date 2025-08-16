@@ -10,8 +10,8 @@ using UnityEditor;
 /// ・Attached   : 親の前方に固定
 /// ・SurfaceLock: 前方の面へライトだけ貼り付け（ビームは手元→前方のまま）
 ///
-/// 点灯中は「ライト円錐（※高さ無視：XZ平面だけで角度判定）」に入った幽霊へスタンを与え、
-/// ClearAlert を送って“見つかった”フラグをOFF。Trigger も検出します。
+/// 点灯中は「ライト円錐（※高さ無視：XZ平面だけで角度判定）」に入った幽霊へスタン付与。
+/// Trigger も検出。怒りシステム(GhostAnger)がある場合は命中で怒り加算、激怒時はスタン無効にできます。
 public class FrontLightToggle : MonoBehaviour
 {
     public enum FollowMode { Attached, SurfaceLock }
@@ -68,6 +68,14 @@ public class FrontLightToggle : MonoBehaviour
     public bool continuousStunWhileLit = false;
     [Tooltip("OFFの時、ビームから外れて再入射できるまでのクール（秒）")]
     public float restunReenterCooldown = 0.0f;
+
+    [Header("怒り連動（任意）")]
+    [Tooltip("命中時に GhostAnger へ通知して怒りを加算")]
+    public bool informAngerOnHit = true;
+    [Tooltip("1回命中あたりの怒りスケール（GhostAnger.addPerHit に掛け算）")]
+    public float angerAddScale = 1f;
+    [Tooltip("激怒中(IsEnraged)はスタンを無効化する")]
+    public bool skipStunWhenEnraged = true;
 
     [Header("入力（新InputSystem）")]
     public Key toggleKey = Key.Enter;
@@ -358,7 +366,6 @@ public class FrontLightToggle : MonoBehaviour
             // 再スタンポリシー
             bool reenter = !_lastFrameHit.Contains(key);
             if (!continuousStunWhileLit && !reenter) continue;
-
             if (!continuousStunWhileLit && restunReenterCooldown > 0f)
             {
                 if (_lastExitTime.TryGetValue(key, out float lastExit) &&
@@ -369,10 +376,21 @@ public class FrontLightToggle : MonoBehaviour
             if (clearAlertOnHit)
                 col.transform.SendMessageUpwards("ClearAlert", SendMessageOptions.DontRequireReceiver);
 
+            // ② 怒り：命中通知 → 激怒中ならスタンをスキップ
+            GhostAnger anger = col.GetComponentInParent<GhostAnger>() ?? col.GetComponentInChildren<GhostAnger>();
+            if (informAngerOnHit && anger) anger.OnLightHit(angerAddScale);
+
+            bool isEnraged = anger && anger.IsEnraged;
+            if (skipStunWhenEnraged && isEnraged)
+            {
+                if (debugLogHits) Debug.Log($"[FrontLightToggle] Enraged: no stun on {col.name}");
+                continue; // ★スタン処理へ進まない
+            }
+
             if (debugLogHits)
                 Debug.Log($"[FrontLightToggle] Hit: {col.name} (reenter={reenter})");
 
-            // ② スタン
+            // ③ スタン
             if (stunGhostOnHit)
             {
                 if (chase)
@@ -401,7 +419,7 @@ public class FrontLightToggle : MonoBehaviour
         // GhostChase を停止
         chase.enabled = false;
 
-        // NavMeshAgent を使っていれば止める（存在すれば）
+        // NavMeshAgent があれば止める（存在すれば）
         var agent = chase.GetComponentInParent<UnityEngine.AI.NavMeshAgent>() ??
                     chase.GetComponentInChildren<UnityEngine.AI.NavMeshAgent>();
         bool hadAgent = agent != null;
